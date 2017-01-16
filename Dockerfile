@@ -7,16 +7,17 @@ ENV         DEBIAN_FRONTEND=noninteractive
 
 # Update package repository and install packages
 RUN         apt-get -y update && \
-            apt-get -y install supervisor php5-fpm php5-sqlite wget && \
+            apt-get -y install supervisor php5-fpm php5-sqlite wget unzip && \
             apt-get clean && \
             rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Fetch the latest software version from the official website if needed
-RUN         test ! -d /usr/share/nginx/html/baikal-regular && \
-            wget http://baikal-server.com/get/baikal-regular-0.2.7.tgz && \
-            tar xvzf baikal-regular-0.2.7.tgz -C /usr/share/nginx/html && \
-            chown -R www-data:www-data /usr/share/nginx/html/baikal-regular && \
-            rm baikal-regular-0.2.7.tgz
+RUN         test ! -d /usr/share/nginx/html/baikal && \
+            wget https://github.com/fruux/Baikal/releases/download/0.4.6/baikal-0.4.6.zip && \
+            unzip baikal-0.4.6.zip -d /usr/share/nginx/html && \
+            chown -R www-data:www-data /usr/share/nginx/html/baikal && \
+            rm baikal-0.4.6.zip
+RUN         touch /usr/share/nginx/html/baikal/Specific/ENABLE_INSTALL
 
 # Add configuration files. User can provides customs files using -v in the image startup command line.
 COPY        supervisord.conf /etc/supervisor/supervisord.conf
