@@ -28,3 +28,4 @@ EXPOSE      80
 
 # Last but least, unleach the daemon!
 ENTRYPOINT  ["/usr/bin/supervisord"]
+#CMD  ["/usr/bin/supervisord"]
