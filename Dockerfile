@@ -1,17 +1,18 @@
 FROM        nginx:latest
-MAINTAINER  Benoit <benoit@terra-art.net>
+MAINTAINER  Sheedy <git@michaelsheedy.com>
 
 # Set Environement variables
 ENV         LC_ALL=C
 ENV         DEBIAN_FRONTEND=noninteractive
 
 # Update package repository and install packages
+
 RUN         apt-get -y update && \
             apt-get -y install supervisor php5-fpm php5-sqlite wget unzip && \
             apt-get clean && \
             rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Fetch the latest software version from the official website if needed
+# Fetch the latest software version from the official repo if needed
 RUN         test ! -d /usr/share/nginx/html/baikal && \
             wget https://github.com/fruux/Baikal/releases/download/0.4.6/baikal-0.4.6.zip && \
             unzip baikal-0.4.6.zip -d /usr/share/nginx/html && \
