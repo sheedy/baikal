@@ -19,6 +19,9 @@ RUN         test ! -d /usr/share/nginx/html/baikal && \
             unzip baikal-${BAIKAL_VERSION}.zip -d /usr/share/nginx/html && \
             chown -R www-data:www-data /usr/share/nginx/html/baikal && \
             rm baikal-${BAIKAL_VERSION}.zip
+
+RUN         mkdir -p /run/php \
+            mkdir -p /var/log/php7.3-fpm
 # RUN         touch /usr/share/nginx/html/baikal/Specific/ENABLE_INSTALL # for new installs
 
 # Add configuration files. User can provides customs files using -v in the image startup command line.
