@@ -9,7 +9,7 @@ ENV         BAIKAL_VERSION=0.5.3
 # Update package repository and install packages
 
 RUN         apt-get -y update && \
-            apt-get -y install supervisor php7.3-fpm php7.3-sqlite3 wget unzip && \
+            apt-get -y install supervisor php7.3-fpm php7.3-sqlite3 php-xmlwriter php-dom php-mbstring wget unzip && \
             apt-get clean && \
             rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
