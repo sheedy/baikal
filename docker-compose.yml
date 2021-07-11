@@ -1,0 +1,14 @@
+version: '2'
+services:
+  baikal-server:
+    image: sheedy/baikal
+    # build: .
+    container_name: baikal
+    restart: always
+    ports:
+      - "32771:8080"
+    volumes:
+      - ./Specific/:/var/www/Specific
+      - ./config:/var/www/config
+    # user: 1001:1001
+    # command: ["/entrypoint.sh"]

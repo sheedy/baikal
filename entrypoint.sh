@@ -1,10 +1,10 @@
 #!/bin/bash
-# ls -lha /var/run
-# ls -lha /var/cache
-# ls -lha /home/app
-echo "I am $(id -u)"
-id
-# echo "looking for supervisor"
-# supervisord -h
+
+# Baikal can't write the `db` folder so we hav to create it
+# ... or you could just create it in the folder you're mounting in the `volumes`
+mkdir -p /var/www/Specific/db
+# `chown` the newly created directory
+chown -R app:app /var/www/Specific
+
+# Run supervisor
 /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
-# exec /usr/sbin/nginx -c /etc/nginx/nginx.conf
