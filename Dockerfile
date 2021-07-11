@@ -1,5 +1,3 @@
-# https://github.com/ckulka/baikal-docker/blob/master/nginx.dockerfile
-
 ARG FROM_ARCH=amd64
 
 # Multi-stage build, see https://docs.docker.com/develop/develop-images/multistage-build/

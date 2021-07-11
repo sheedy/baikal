@@ -1,7 +1,7 @@
 version: '2'
 services:
   baikal-server:
-    image: sheedy/baikal
+    image: sheedy/baikal:1.0
     # build: .
     container_name: baikal
     restart: always
