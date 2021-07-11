@@ -1,72 +1,66 @@
-FROM        nginx:latest
-LABEL       maintainer  "Sheedy <git@michaelsheedy.com>"
+ARG FROM_ARCH=amd64
 
-# RUN useradd -u 10001 -G www-data app
+# Multi-stage build, see https://docs.docker.com/develop/develop-images/multistage-build/
+FROM alpine AS builder
+
+ENV VERSION 0.8.0
+
+ADD "https://github.com/sabre-io/Baikal/releases/download/${VERSION}/baikal-${VERSION}.zip" .
+RUN apk add unzip && unzip -q baikal-${VERSION}.zip
+
+# Final Docker image
+FROM $FROM_ARCH/nginx:mainline
+
+LABEL description="Baikal is a Cal and CardDAV server, based on sabre/dav, that includes an administrative interface for easy management."
+LABEL version="0.8.0"
+LABEL repository="https://github.com/sheedy/baikal"
+LABEL website="http://sabre.io/baikal/"
+LABEL maintainer  "Sheedy <git@michaelsheedy.com>"
+
+# Add non-root user
 RUN groupadd -g 1001 app && \
-    useradd -u 1001 -g app -G www-data -m app
+  useradd -u 1001 -g app -G app -m app
 
-# Set Environement variables
-ENV         LC_ALL=C
-ENV         DEBIAN_FRONTEND=noninteractive
-ENV         BAIKAL_VERSION=0.5.3
+# Install dependencies: PHP & SQLite3
+RUN curl -o /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg &&\
+  echo "deb https://packages.sury.org/php/ buster main" > /etc/apt/sources.list.d/php.list &&\
+  apt update && \
+  apt install -y \
+  php8.0-curl \
+  php8.0-dom \
+  php8.0-fpm \
+  php8.0-mbstring \
+  php8.0-mysql \
+  php8.0-sqlite \
+  php8.0-xmlwriter \
+  sqlite3 \
+  sendmail \
+  supervisor \
+  && rm -rf /var/lib/apt/lists/*
 
-# Update package repository and install packages
+# Add Baikal
+COPY --from=builder baikal /var/www
 
-RUN         apt-get -y update && \
-            apt-get -y install supervisor php7.3-fpm php7.3-sqlite3 php-xmlwriter php-dom php-mbstring wget unzip && \
-            apt-get clean && \
-            rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+# Create directories
+RUN mkdir -p -m 755 /run/app /var/log/app /var/tmp
 
-# Fetch the latest software version from the official repo if needed
-RUN         test ! -d /usr/share/nginx/html/baikal && \
-            wget https://github.com/sabre-io/Baikal/releases/download/${BAIKAL_VERSION}/baikal-${BAIKAL_VERSION}.zip && \
-            unzip baikal-${BAIKAL_VERSION}.zip -d /usr/share/nginx/html && \
-            chown -R www-data:www-data /usr/share/nginx/html/baikal && \
-            rm baikal-${BAIKAL_VERSION}.zip
+# Set permissions
+RUN chown -R app:app \
+  /var/tmp \
+  /var/www \
+  /var/log/app \
+  /var/cache/nginx \
+  /run/app
 
-RUN         mkdir -p -m 755 \
-            /var/run/supervisor \
-            /var/run/php7.3-fpm \
-            /var/log/supervisor \
-            /var/log/apps \
-            /run/php
+# Copy config files
+COPY --chown=app:app nginx.conf /etc/nginx/nginx.conf
+COPY --chown=app:app php-fpm.conf /etc/php/8.0/fpm/pool.d/www.conf
+COPY --chown=app:app supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY --chown=app:app entrypoint.sh /entrypoint.sh
 
-RUN         touch /var/log/supervisor/supervisord.log \
-            && touch /var/run/nginx.pid
-
-RUN         chown -R app:app \
-              /var/run/supervisor \
-              /var/run/php7.3-fpm \
-              /var/log/supervisor \
-              /var/log/nginx \
-              /var/log/apps \
-              /run/php \
-              /var/cache/nginx \
-              /var/run/nginx.pid \
-            && chmod u=rwx,go=rx,a+s /var/log/apps \
-            && chmod -R g+w /var/cache/nginx \
-            && chmod +x /home \
-            && chmod +x /home/app \
-            && chmod g+s \
-              /var/run/supervisor \
-              /var/run/php7.3-fpm \
-              /var/log/supervisor \
-              /run/php \
-              /var/log/apps \
-              /var/cache/nginx
-
-# RUN         touch /usr/share/nginx/html/baikal/Specific/ENABLE_INSTALL # for new installs
-
-# Add configuration files. User can provides customs files using -v in the image startup command line.
-COPY        --chown=app:app supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY        --chown=app:app nginx.conf /etc/nginx/nginx.conf
-COPY        --chown=app:app php-fpm.conf /etc/php7.3/fpm/php-fpm.conf
-
+# Set non-root user
 USER app
 
-# Expose HTTP port
-EXPOSE      8080
+EXPOSE 8080
 
-# Last but least, unleach the daemon!
-ENTRYPOINT  ["/usr/bin/supervisord"]
-# CMD  ["/usr/bin/supervisord"]
+ENTRYPOINT ["/entrypoint.sh"]
